@@ -1,4 +1,4 @@
-import { DEMO_HOUSES } from './config.mjs?v=2';
+import { DEMO_HOUSES } from './config.mjs?v=3';
 
 export function localDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;

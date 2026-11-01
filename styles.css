@@ -1,4 +1,4 @@
-@import url('./tokens.css?v=2');
+@import url('./tokens.css?v=3');
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
@@ -215,6 +215,26 @@ textarea.text-input { resize: vertical; min-height: 85px; }
 .request-save { margin-top: 18px; }
 .owner-links { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--green); margin-bottom: 20px; }
 .toast { bottom: 22px; }
+.cleaner-date { margin-bottom: 14px; color: var(--muted); font-size: 12px; text-transform: capitalize; }
+.recent-visits { margin-top: 24px; padding: 18px; border-radius: 16px; }
+.visits-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.visits-heading h2 { font-size: 15px; }
+.visits-heading a { display: inline-flex; align-items: center; min-height: 44px; color: var(--green); font-size: 12px; text-underline-offset: 3px; white-space: nowrap; }
+.visits-columns, .visits-list li { display: grid; grid-template-columns: minmax(94px, 1.4fr) minmax(48px, .8fr) minmax(48px, .8fr); gap: 8px; }
+.visits-columns { margin-top: 14px; padding-bottom: 9px; font-size: 11px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.visits-columns > :not(:first-child), .visits-list li > :not(:first-child) { text-align: right; }
+.visits-list { list-style: none; padding: 0; margin: 0; }
+.visits-list li { align-items: start; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.visits-list li:last-child { border: 0; padding-bottom: 2px; }
+.visits-list strong { display: block; font-size: 13px; font-weight: 550; font-variant-numeric: tabular-nums; }
+.visits-list small { display: block; margin-top: 3px; font-size: 10px; color: var(--muted); }
+.visits-empty { margin-top: 13px; font-size: 12px; color: var(--muted); }
+.history-back { display: inline-flex; min-height: 44px; align-items: center; color: var(--green); font-size: 13px; text-underline-offset: 3px; }
+.history-title { font-size: 25px; margin: 10px 0 22px; letter-spacing: -.6px; }
+.history-filters { display: grid; grid-template-columns: 1fr; gap: 0; }
+.history-filters .form-field { margin-bottom: 12px; }
+.history-filters + .recent-visits { margin-top: 8px; }
+.history-count { font-size: 12px; color: var(--muted); }
 
 @media (min-width: 700px) {
   .house-card { margin-bottom: 0; }

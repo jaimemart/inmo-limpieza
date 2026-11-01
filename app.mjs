@@ -1,11 +1,12 @@
-import { DEMO_HOUSES, STORAGE_KEY } from './config.mjs?v=2';
-import { activeSession, durationMinutes, endSession, localDate, parseCents, parseMinutes, reviewRequest, seedState, startSession, validateState } from './model.mjs?v=2';
+import { DEMO_HOUSES, STORAGE_KEY } from './config.mjs?v=3';
+import { activeSession, durationMinutes, endSession, localDate, parseCents, parseMinutes, reviewRequest, seedState, startSession, validateState } from './model.mjs?v=3';
+import { visitDate, visitsFor } from './visits.mjs?v=3';
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 const euros = cents => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
-const time = value => new Date(value).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const time = value => new Date(value).toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 const readableDate = value => new Date(`${value}T12:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
 const duration = minutes => `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')} min`;
 const house = id => DEMO_HOUSES.find(item => item.id === id) || DEMO_HOUSES[0];
@@ -26,6 +27,8 @@ try {
 const queryHouse = new URLSearchParams(location.search).get('casa');
 if (DEMO_HOUSES.some(item => item.id === queryHouse) && !activeSession(state)) state.selectedHouse = queryHouse;
 let activityFilter = 'all';
+let historyHouse = 'all';
+let historyMonth = visitDate().slice(0, 7);
 let managementHouse = 'all';
 let managementMonth = 'all';
 let toastTimer;
@@ -64,7 +67,7 @@ function commit(update, message) {
 
 function currentPage() {
   const page = location.hash.slice(1);
-  return ['jornada', 'actividad', 'gestion'].includes(page) ? page : 'jornada';
+  return ['jornada', 'historico', 'actividad', 'gestion'].includes(page) ? page : 'jornada';
 }
 
 function heading(eyebrow, title, subtitle = '') {
@@ -91,10 +94,11 @@ function allEvents() {
 function renderJornada() {
   const active = activeSession(state);
   const selectedId = active?.houseId || state.selectedHouse;
-  const latest = state.sessions.filter(item => item.houseId === selectedId).at(-1);
+  const latest = selectedId ? visitsFor(state.sessions, { houseId: selectedId, limit: 1 })[0] : null;
+  const recent = visitsFor(state.sessions, { houseId: selectedId, limit: 4 });
   const selected = DEMO_HOUSES.find(item => item.id === selectedId);
-  const stamp = value => `${time(value)}${localDate(new Date(value)) === localDate() ? '' : ` · ${readableDate(localDate(new Date(value)))}`}`;
-  return `<h1 class="sr-only">Registro de limpieza</h1>
+  const stamp = value => `${time(value)}${visitDate(value) === visitDate() ? '' : ` · ${readableDate(visitDate(value))}`}`;
+  return `<h1 class="sr-only">Registro de limpieza</h1><p class="cleaner-date">${esc(new Date().toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</p>
     <section class="card simple-card" aria-label="Fichaje">
       <label class="simple-label" for="house-select">Vivienda</label>
       <select id="house-select" class="select-input" ${active ? 'disabled' : ''}>
@@ -109,7 +113,26 @@ function renderJornada() {
       <button id="add-expense" class="button secondary full" ${!selected ? 'disabled' : ''}>Añadir gasto extra</button>
       <button id="add-extra" class="button secondary full" ${!selected ? 'disabled' : ''}>Añadir tiempo extra</button>
     </section>
+    <section class="card recent-visits" aria-label="Últimas cuatro visitas"><div class="visits-heading"><h2>Últimas 4 visitas</h2><a href="#historico">Ver histórico</a></div>${visitsHTML(recent)}${!recent.length ? '<p class="visits-empty">Aquí aparecerán las visitas registradas.</p>' : ''}</section>
     <p class="simple-demo-note">Prueba de diseño. El wifi y el envío de datos están pendientes.</p>`;
+}
+
+function visitsHTML(visits) {
+  if (!visits.length) return '';
+  const visitTime = value => new Date(value).toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' });
+  const numericDate = value => visitDate(value).split('-').reverse().join('/');
+  return `<div class="visits-columns" aria-hidden="true"><span>Fecha</span><span>Entrada</span><span>Salida</span></div><ol class="visits-list">${visits.map(visit => `<li><div><strong>${numericDate(visit.start)}</strong><small>${esc(house(visit.houseId).name)}${!visit.end ? ' · En curso' : ''}</small></div><div><span class="sr-only">Entrada </span><strong>${visitTime(visit.start)}</strong></div><div><span class="sr-only">Salida </span><strong>${visit.end ? visitTime(visit.end) : '—'}</strong>${visit.end && visitDate(visit.end) !== visitDate(visit.start) ? `<small>${numericDate(visit.end)}</small>` : ''}</div></li>`).join('')}</ol>`;
+}
+
+function renderHistory() {
+  const thisMonth = visitDate().slice(0, 7);
+  const months = [...new Set([thisMonth, ...state.sessions.map(item => visitDate(item.start).slice(0, 7))])].sort().reverse();
+  const monthLabel = month => new Date(`${month}-15T12:00:00Z`).toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', month: 'long', year: 'numeric' });
+  const visits = visitsFor(state.sessions, { houseId: historyHouse === 'all' ? '' : historyHouse, month: historyMonth === 'all' ? '' : historyMonth });
+  return `<a class="history-back" href="#jornada">← Volver al fichaje</a><h1 class="history-title">Histórico de visitas</h1>
+    <div class="history-filters"><label class="form-field"><span>Vivienda</span><select class="select-input" id="history-house"><option value="all">Todas</option>${DEMO_HOUSES.map(item => `<option value="${item.id}" ${historyHouse === item.id ? 'selected' : ''}>${item.name}</option>`).join('')}</select></label><label class="form-field"><span>Mes</span><select class="select-input" id="history-month"><option value="all" ${historyMonth === 'all' ? 'selected' : ''}>Todos los meses</option>${months.map(month => `<option value="${month}" ${historyMonth === month ? 'selected' : ''}>${esc(monthLabel(month))}${month === thisMonth ? ' · Actual' : ''}</option>`).join('')}</select></label></div>
+    <section class="card recent-visits" aria-label="Visitas del periodo"><p class="history-count">${visits.length} ${visits.length === 1 ? 'visita' : 'visitas'}</p>${visitsHTML(visits)}${!visits.length ? '<p class="visits-empty">No hay visitas en este periodo.</p>' : ''}</section>
+    <p class="simple-demo-note">Demo: este histórico solo contiene los fichajes de este navegador.</p>`;
 }
 
 function renderActivity() {
@@ -145,8 +168,8 @@ function renderManagement() {
 
 function render() {
   const page = currentPage();
-  document.body.classList.toggle('cleaner-view', page === 'jornada');
-  $('#main').innerHTML = `${loadError ? `<p class="form-error" role="alert">${esc(loadError)}</p>` : ''}${page === 'jornada' ? renderJornada() : page === 'actividad' ? renderActivity() : renderManagement()}`;
+  document.body.classList.toggle('cleaner-view', page === 'jornada' || page === 'historico');
+  $('#main').innerHTML = `${loadError ? `<p class="form-error" role="alert">${esc(loadError)}</p>` : ''}${page === 'jornada' ? renderJornada() : page === 'historico' ? renderHistory() : page === 'actividad' ? renderActivity() : renderManagement()}`;
   $('#house-select')?.addEventListener('change', event => {
     const selectedHouse = event.target.value;
     commit(latest => {
@@ -154,6 +177,8 @@ function render() {
       return { ...latest, selectedHouse };
     });
   });
+  $('#history-house')?.addEventListener('change', event => { historyHouse = event.target.value; render(); $('#history-house').focus(); });
+  $('#history-month')?.addEventListener('change', event => { historyMonth = event.target.value; render(); $('#history-month').focus(); });
   $('#shift-action')?.addEventListener('click', shiftAction);
   $('#add-expense')?.addEventListener('click', () => openRequest('expense'));
   $('#add-extra')?.addEventListener('click', () => openRequest('extra'));
@@ -319,6 +344,7 @@ document.addEventListener('click', event => {
     $('#main').focus();
     return;
   }
+  if (event.target.closest('a[href="#historico"]')) { historyHouse = activeSession(state)?.houseId || state.selectedHouse || 'all'; historyMonth = visitDate().slice(0, 7); }
   if (event.target.closest('[data-close]')) closeModal();
   const receiptButton = event.target.closest('[data-receipt]');
   if (receiptButton) showReceipt(receiptButton.dataset.receipt);

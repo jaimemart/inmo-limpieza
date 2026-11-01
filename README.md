@@ -14,6 +14,11 @@ Repositorio público de la demo: https://github.com/jaimemart/inmo-limpieza
   para gastos y tiempo extra. Desplegable con Arzobispo e Hípica.
 - Cada fichaje conserva el instante del primer toque, sin confirmación adicional.
   Solo puede haber una jornada abierta. La vivienda queda fijada hasta la salida.
+- Fecha de hoy y resumen de las cuatro últimas visitas de la vivienda elegida.
+  Cada visita muestra fecha, entrada y salida; las abiertas indican «En curso».
+- Histórico accesible a la trabajadora desde `./#historico`, con filtros por
+  vivienda y mes, inicialmente el mes corriente. Fechas en Europe/Madrid,
+  también en los cambios de mes y las visitas que terminan al día siguiente.
 - Gastos con importe, motivo y ticket obligatorio de hasta 2 MB (foto o PDF).
 - Tiempo extra entre 1 y 240 minutos, con motivo. Fecha y vivienda automáticas.
 - Vista del propietario separada en `./#gestion`; registros en `./#actividad`.
@@ -47,7 +52,7 @@ Abrir `http://127.0.0.1:8097/`. Usar HTTP, no abrir `index.html` como archivo,
 porque los scripts son módulos ES.
 
 Desde la raíz del proyecto Inmomanagement, las pruebas de las reglas del modelo
-se ejecutan con `node --test tests/cleaning/model.test.mjs`.
+se ejecutan con `node --test tests/cleaning/*.test.mjs`.
 
 Un enlace puede preseleccionar una vivienda:
 `./?casa=arzobispo` o `./?casa=hipica`. Si hay una jornada abierta,
@@ -87,6 +92,16 @@ un servicio independiente gratuito que valide y almacene las operaciones.
    no deben convertirse en apuntes contables, ni siquiera al aprobar su revisión.
 6. Sustituir el adaptador local de esta demo. Actualizar `connect-src 'none'`
    en la política CSP solo con el origen concreto del servicio necesario.
+
+La cuenta de Cloudflare debe estar autenticada antes de poder crear la base de
+datos o desplegar el servicio. La demo publicada no usa una base de datos
+compartida, y el histórico tampoco debe presentarse como almacenamiento remoto.
+
+Con DIGI hay que revisar CG-NAT: su conexión estándar utiliza IP dinámicas
+compartidas. Registrar una IP una vez no identifica de forma exclusiva una casa.
+El modelo de router se puede consultar en Inicio de Mi DIGI; la prueba de la
+conexión requiere acceder una vez desde el wifi de cada vivienda. Mantener el
+requisito de no contratar cuotas o servicios adicionales sin petición expresa.
 
 ### Datos de cada vivienda que se necesitarán después
 
