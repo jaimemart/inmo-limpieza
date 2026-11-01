@@ -18,7 +18,7 @@ button, a { touch-action: manipulation; }
 .demo-banner { min-height: 33px; padding: 5px 12px; display: flex; align-items: center; justify-content: center; gap: 7px; background: #f0eddf; color: #635b37; font-size: 11px; font-weight: 550; letter-spacing: .02em; }
 .demo-dot { width: 5px; height: 5px; border-radius: 50%; background: #947b3e; }
 .banner-separator { opacity: .5; }
-.banner-info { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid #aba58a; background: transparent; color: #635b37; border-radius: 50%; font-size: 12px; margin-left: 2px; }
+.banner-info { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid #aba58a; background: transparent; color: #635b37; border-radius: 50%; font-size: 12px; margin-left: 2px; }
 .site-header { max-width: 1056px; margin: 0 auto; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 22px; font-weight: 750; letter-spacing: -.8px; }
 .brand-mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; background: var(--green); color: white; }
@@ -117,7 +117,7 @@ p { margin: 0; }
 .bottom-nav a .icon { width: 20px; height: 20px; }
 .bottom-nav a[aria-current="page"] { color: var(--green); background: #eef4e9; }
 .toolbar { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
-.select-input, .text-input { width: 100%; background: white; color: var(--ink); border: 1px solid #d8dfd3; padding: 12px; border-radius: 10px; min-height: 47px; font-size: 16px; }
+.select-input, .text-input { width: 100%; min-width: 0; background: white; color: var(--ink); border: 1px solid #d8dfd3; padding: 12px; border-radius: 10px; min-height: 47px; font-size: 16px; }
 .toolbar .select-input { width: auto; min-width: 150px; font-size: 12px; flex: 1; }
 .toolbar .button { min-height: 44px; font-size: 12px; }
 .activity-list { max-width: 720px; }
@@ -238,6 +238,8 @@ textarea.text-input { resize: vertical; min-height: 85px; }
   .modal-body { padding: 23px 20px; }
   dialog { max-height: calc(100dvh - 24px); border-radius: 21px; }
   .review-actions { margin-left: 0; }
+  .review-actions .button, .quick-minutes button, .text-button { min-height: 44px; }
+  .icon-button { width: 44px; height: 44px; }
   .reset-line { text-align: center; }
 }
 @media (max-width: 360px) {
