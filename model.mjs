@@ -1,4 +1,4 @@
-import { DEMO_HOUSES } from './config.mjs';
+import { DEMO_HOUSES } from './config.mjs?v=2';
 
 export function localDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -55,25 +55,19 @@ export function validateRequestDate(value, now = new Date()) {
   return value;
 }
 
-export function seedState(now = new Date()) {
-  const previous = new Date(now);
-  previous.setDate(previous.getDate() - 1);
-  previous.setHours(9, 0, 0, 0);
-  const end = new Date(previous);
-  end.setHours(11, 15);
-  const date = localDate(previous);
+export function seedState() {
   return {
-    version: 1,
-    selectedHouse: 'olivo',
-    sessions: [{ id: 'example-session', houseId: 'olivo', start: previous.toISOString(), end: end.toISOString(), example: true }],
-    expenses: [{ id: 'example-expense', houseId: 'olivo', date, cents: 1240, description: 'Productos de limpieza', status: 'pending', receipt: null, example: true }],
-    extras: [{ id: 'example-extra', houseId: 'olivo', date, minutes: 20, description: 'Compra de productos antes de la entrada', status: 'pending', example: true }],
+    version: 2,
+    selectedHouse: '',
+    sessions: [],
+    expenses: [],
+    extras: [],
   };
 }
 
 // Validate persisted browser data before rendering or applying a mutation.
 export function validateState(state) {
-  if (!state || state.version !== 1 || !DEMO_HOUSES.some(h => h.id === state.selectedHouse)) return false;
+  if (!state || state.version !== 2 || (state.selectedHouse !== '' && !DEMO_HOUSES.some(h => h.id === state.selectedHouse))) return false;
   const houseValid = item => item && typeof item.id === 'string' && DEMO_HOUSES.some(h => h.id === item.houseId);
   const dateValid = value => {
     try { validateRequestDate(value); return true; } catch { return false; }
@@ -81,14 +75,14 @@ export function validateState(state) {
   if (!Array.isArray(state.sessions) || !Array.isArray(state.expenses) || !Array.isArray(state.extras)) return false;
   if (!state.sessions.every(s => houseValid(s) && Number.isFinite(Date.parse(s.start)) && (s.end === null || (Number.isFinite(Date.parse(s.end)) && Date.parse(s.end) >= Date.parse(s.start))))) return false;
   if (state.sessions.filter(s => !s.end).length > 1) return false;
-  const requestValid = item => houseValid(item) && dateValid(item.date) && typeof item.description === 'string' && item.description.length <= 240 && ['pending', 'approved', 'rejected'].includes(item.status);
-  const receiptValid = receipt => receipt === null || (
+  const requestValid = item => houseValid(item) && dateValid(item.date) && typeof item.description === 'string' && item.description.trim().length >= 5 && item.description.length <= 240 && ['pending', 'approved', 'rejected'].includes(item.status);
+  const receiptValid = receipt => (
     typeof receipt?.data === 'string'
     && /^data:(image\/(jpeg|png|webp)|application\/pdf);base64,/.test(receipt.data)
     && receipt.data.length < 2900000
     && typeof receipt.name === 'string'
   );
-  if (!state.expenses.every(e => requestValid(e) && Number.isInteger(e.cents) && e.cents > 0 && e.cents <= 999999 && receiptValid(e.receipt))) return false;
+  if (!state.expenses.every(e => requestValid(e) && e.accounting === false && Number.isInteger(e.cents) && e.cents > 0 && e.cents <= 999999 && receiptValid(e.receipt))) return false;
   if (!state.extras.every(e => requestValid(e) && Number.isInteger(e.minutes) && e.minutes >= 1 && e.minutes <= 240)) return false;
   for (const collection of ['sessions', 'expenses', 'extras']) {
     if (new Set(state[collection].map(item => item.id)).size !== state[collection].length) return false;

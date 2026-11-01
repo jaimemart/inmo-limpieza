@@ -1,11 +1,11 @@
-import { DEMO_HOUSES, STORAGE_KEY } from './config.mjs';
-import { activeSession, durationMinutes, endSession, localDate, parseCents, parseMinutes, reviewRequest, seedState, startSession, validateRequestDate, validateState } from './model.mjs';
+import { DEMO_HOUSES, STORAGE_KEY } from './config.mjs?v=2';
+import { activeSession, durationMinutes, endSession, localDate, parseCents, parseMinutes, reviewRequest, seedState, startSession, validateState } from './model.mjs?v=2';
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 const euros = cents => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
-const time = value => new Date(value).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+const time = value => new Date(value).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 const readableDate = value => new Date(`${value}T12:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
 const duration = minutes => `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')} min`;
 const house = id => DEMO_HOUSES.find(item => item.id === id) || DEMO_HOUSES[0];
@@ -90,33 +90,32 @@ function allEvents() {
 
 function renderJornada() {
   const active = activeSession(state);
-  const selected = house(active?.houseId || state.selectedHouse);
-  const todays = allEvents().filter(item => item.date === localDate() && item.houseId === selected.id);
-  const todayMinutes = state.sessions.filter(item => item.houseId === selected.id && localDate(new Date(item.start)) === localDate()).reduce((sum, item) => sum + durationMinutes(item), 0);
-  return `${heading('Tu espacio de limpieza', active ? 'Todo en marcha.' : 'Una casa lista empieza aquí.')}
-    <div class="layout"><div class="jornada-column">
-      <section class="card house-card" aria-label="Vivienda seleccionada"><span class="house-initials">${selected.initials}</span><div class="house-select-wrap"><label class="field-caption" for="house-select">${active ? 'Jornada en curso en' : 'Hoy estás en'}</label><select id="house-select" class="house-select" ${active ? 'disabled' : ''}>${DEMO_HOUSES.map(item => `<option value="${item.id}" ${item.id === selected.id ? 'selected' : ''}>${item.name}</option>`).join('')}</select><p class="house-detail">${selected.detail}</p></div>${icon('chevron')}</section>
-      <section class="card shift-card" aria-label="Registro de jornada"><div class="shift-top"><span class="pill ${active ? 'green' : 'neutral'}"><span class="dot"></span>${active ? 'Jornada en curso' : 'Sin jornada activa'}</span>${icon('clock')}</div>
-        <div class="shift-face"><div class="clock-art">${icon(active ? 'clock' : 'house')}</div>${active ? `<div class="timer" id="timer">${timerHTML(active)}</div><p class="shift-copy">Entrada de prueba a las ${time(active.start)}</p>` : '<p class="shift-title">¿Todo listo para empezar?</p><p class="shift-copy">Registra tu entrada y nos ponemos en marcha.</p>'}</div>
-        <button id="shift-action" class="button full">${icon(active ? 'check' : 'arrow')}${active ? 'Registrar salida de prueba' : 'Registrar entrada de prueba'}</button><p class="shift-foot">${icon('info')} Simulación guardada solo en este dispositivo</p>
-      </section>
-      <div class="network-note">${icon('wifi')}<div><strong>Wifi pendiente de configurar</strong><p>Ahora puedes probar los botones sin comprobar la red. Los fichajes reales requerirán la conexión de esta casa.</p></div></div>
-    </div><div class="stack">
-      <section class="card extras-card"><h2>¿Algo más que añadir?</h2><p class="section-intro">Los pequeños recados también cuentan.</p><button class="action-row" id="add-expense"><span class="action-icon">${icon('receipt')}</span><span class="copy"><strong>Añadir un gasto</strong><small>Productos, materiales y su ticket</small></span>${icon('chevron')}</button><button class="action-row" id="add-extra"><span class="action-icon sand">${icon('plus')}</span><span class="copy"><strong>Añadir tiempo extra</strong><small>Un recado fuera de tu jornada</small></span>${icon('chevron')}</button></section>
-      <section class="card today-card"><div class="section-label"><h2>Tu día, de un vistazo</h2>${todays.length ? `<span class="day-total">${duration(todayMinutes)}</span>` : '<span>Hoy</span>'}</div>${todays.length ? todays.map(eventHTML).join('') : `<div class="empty">${icon('history')}<strong>Un nuevo día por delante</strong><p>Aquí aparecerá tu actividad en ${selected.name}.</p></div>`}</section>
-      <p class="local-note">${icon('info')}<span>Estás viendo una demo con viviendas ficticias. No introduzcas datos ni tickets reales.</span></p>
-    </div></div>`;
-}
-
-function timerHTML(active) {
-  const total = durationMinutes(active);
-  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}<small>h / min</small>`;
+  const selectedId = active?.houseId || state.selectedHouse;
+  const latest = state.sessions.filter(item => item.houseId === selectedId).at(-1);
+  const selected = DEMO_HOUSES.find(item => item.id === selectedId);
+  const stamp = value => `${time(value)}${localDate(new Date(value)) === localDate() ? '' : ` · ${readableDate(localDate(new Date(value)))}`}`;
+  return `<h1 class="sr-only">Registro de limpieza</h1>
+    <section class="card simple-card" aria-label="Fichaje">
+      <label class="simple-label" for="house-select">Vivienda</label>
+      <select id="house-select" class="select-input" ${active ? 'disabled' : ''}>
+        <option value="" disabled ${!selected ? 'selected' : ''}>Elige una vivienda</option>
+        ${DEMO_HOUSES.map(item => `<option value="${item.id}" ${item.id === selectedId ? 'selected' : ''}>${item.name}</option>`).join('')}
+      </select>
+      <button id="shift-action" class="button full simple-check" ${!selected ? 'disabled' : ''}>${active ? 'Hacer check-out' : 'Hacer check-in'}</button>
+      ${latest ? `<dl class="check-times"><div><dt>Check-in</dt><dd>${esc(stamp(latest.start))}</dd></div>${latest.end ? `<div><dt>Check-out</dt><dd>${esc(stamp(latest.end))}</dd></div>` : ''}</dl><p class="shift-message ${active ? 'in-progress' : ''}">${active ? 'Entrada registrada.' : 'Salida registrada.'}</p>` : '<p class="shift-message">El botón guarda la hora al pulsarlo.</p>'}
+    </section>
+    <section class="simple-extras" aria-label="Extras">
+      <h2>Extras</h2>
+      <button id="add-expense" class="button secondary full" ${!selected ? 'disabled' : ''}>Añadir gasto extra</button>
+      <button id="add-extra" class="button secondary full" ${!selected ? 'disabled' : ''}>Añadir tiempo extra</button>
+    </section>
+    <p class="simple-demo-note">Prueba de diseño. El wifi y el envío de datos están pendientes.</p>`;
 }
 
 function renderActivity() {
   const events = allEvents().filter(item => activityFilter === 'all' || item.type === activityFilter);
   const dates = [...new Set(events.map(item => item.date))];
-  return `${heading('Todo en su sitio', 'Tu actividad.', 'Jornadas, gastos y tiempo adicional, sin perder el hilo.')}
+  return `${heading('Propietario · Demo', 'Registros.')}<div class="owner-links"><a href="#gestion">Volver a revisión</a><a href="#jornada">Ver pantalla de limpieza</a></div>
     <div class="toolbar"><label class="field-caption" for="activity-filter">Mostrar</label><select id="activity-filter" class="select-input">${[['all', 'Toda la actividad'], ['session', 'Jornadas'], ['expense', 'Gastos'], ['extra', 'Tiempo adicional']].map(([value, label]) => `<option value="${value}" ${activityFilter === value ? 'selected' : ''}>${label}</option>`).join('')}</select></div>
     <div class="activity-list">${events.length ? dates.map(date => `<section class="activity-group"><h2 class="group-date">${date === localDate() ? 'Hoy' : esc(readableDate(date))}</h2><div class="card list-card">${events.filter(item => item.date === date).map(eventHTML).join('')}</div></section>`).join('') : `<div class="card empty-card"><div class="empty">${icon('history')}<strong>Aún no hay registros aquí</strong><p>Prueba a registrar una jornada o añadir un gasto.</p></div></div>`}</div>`;
 }
@@ -135,8 +134,8 @@ function renderManagement() {
   const pendingCents = expenses.filter(item => item.status === 'pending').reduce((sum, item) => sum + item.cents, 0);
   const approvedCents = expenses.filter(item => item.status === 'approved').reduce((sum, item) => sum + item.cents, 0);
   const months = [...new Set(allEvents().map(item => item.date.slice(0, 7)))].sort().reverse();
-  return `${heading('Vista del propietario · Demo', 'Todo bajo control.', 'Revisa lo registrado y decide qué gastos y extras aprobar.')}
-    <div class="notice">Esta vista de gestión es pública solo en la demostración. En la versión real tendrá acceso privado para ti.</div>
+  return `${heading('Propietario · Demo', 'Revisión de limpieza.', 'Importes, motivos y tickets para verificar. No se incorporan a la contabilidad.')}<div class="owner-links"><a href="#jornada">Ver pantalla de limpieza</a><a href="#actividad">Ver registros</a></div>
+    <div class="notice">Demo local: aquí solo ves las pruebas de este navegador. El envío desde el móvil de la limpiadora y tu acceso privado están pendientes.</div>
     <div class="toolbar"><select id="management-house" class="select-input" aria-label="Filtrar por vivienda"><option value="all">Todas las viviendas</option>${DEMO_HOUSES.map(item => `<option value="${item.id}" ${managementHouse === item.id ? 'selected' : ''}>${item.name}</option>`).join('')}</select><select id="management-month" class="select-input" aria-label="Filtrar por mes"><option value="all">Todo el historial</option>${months.map(month => `<option value="${month}" ${managementMonth === month ? 'selected' : ''}>${esc(new Date(`${month}-15T12:00:00`).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }))}</option>`).join('')}</select><button id="export" class="button secondary">${icon('download')} Exportar CSV</button></div>
     <div class="metrics"><div class="card metric"><p class="metric-label">Tiempo registrado</p><p class="metric-value">${duration(logged)}</p><p class="metric-note">${sessions.filter(item => !item.end).length ? 'Incluye jornada en curso' : 'Según entradas y salidas'}</p></div><div class="card metric"><p class="metric-label">Extras aprobados</p><p class="metric-value">+${approvedMinutes} min</p><p class="metric-note">${extras.filter(item => item.status === 'pending').reduce((sum, item) => sum + item.minutes, 0)} min por revisar</p></div><div class="card metric"><p class="metric-label">Gastos pendientes</p><p class="metric-value">${euros(pendingCents)}</p><p class="metric-note">${euros(approvedCents)} aprobados</p></div></div>
     <div class="management-layout"><section class="card review-card"><div class="section-label"><h2>Pendiente de revisar</h2><span class="pill amber">${pending.length}</span></div>${pending.length ? pending.map(item => `<article class="review-item"><div class="review-top"><span class="event-icon">${icon(item.collection === 'expenses' ? 'receipt' : 'plus')}</span><div class="event-content"><p class="event-title">${esc(item.description)}</p><p class="event-description">${esc(house(item.houseId).name)} · ${esc(readableDate(item.date))}</p><div class="event-bottom">${item.example ? '<span class="example-label">Ejemplo de solicitud</span>' : ''}${item.receipt ? `<button class="text-button" data-receipt="${esc(item.id)}">Ver ticket</button>` : ''}</div></div><strong class="event-value">${item.collection === 'expenses' ? euros(item.cents) : `+${item.minutes} min`}</strong></div><div class="review-actions"><button class="button quiet" data-review="rejected" data-collection="${item.collection}" data-id="${esc(item.id)}">Rechazar</button><button class="button secondary" data-review="approved" data-collection="${item.collection}" data-id="${esc(item.id)}">${icon('check')} Aprobar</button></div></article>`).join('') : `<div class="empty">${icon('check')}<strong>Todo revisado</strong><p>No hay solicitudes pendientes con estos filtros.</p></div>`}</section>
@@ -146,11 +145,8 @@ function renderManagement() {
 
 function render() {
   const page = currentPage();
+  document.body.classList.toggle('cleaner-view', page === 'jornada');
   $('#main').innerHTML = `${loadError ? `<p class="form-error" role="alert">${esc(loadError)}</p>` : ''}${page === 'jornada' ? renderJornada() : page === 'actividad' ? renderActivity() : renderManagement()}`;
-  document.querySelectorAll('[data-page]').forEach(link => {
-    if (link.dataset.page === page) link.setAttribute('aria-current', 'page');
-    else link.removeAttribute('aria-current');
-  });
   $('#house-select')?.addEventListener('change', event => {
     const selectedHouse = event.target.value;
     commit(latest => {
@@ -179,34 +175,37 @@ function closeModal() {
 }
 
 function shiftAction() {
+  // Capture the timestamp at the first tap, before storage and rendering.
+  const now = new Date();
   const active = activeSession(state);
   if (!active) {
-    commit(latest => startSession(latest, state.selectedHouse), 'Entrada de prueba registrada. ¡Todo listo!');
+    commit(latest => startSession(latest, state.selectedHouse, now), `Check-in registrado a las ${time(now)}.`);
     return;
   }
-  modal('¿Terminamos por hoy?', house(active.houseId).name, `<div class="prose"><p>Entrada a las <strong>${time(active.start)}</strong>. Llevas <strong>${duration(durationMinutes(active))}</strong> en esta jornada de prueba.</p><p>La salida se guardará con la hora actual del dispositivo.</p></div><p id="form-error" class="form-error" role="alert"></p><button id="confirm-exit" class="button full">${icon('check')} Confirmar salida de prueba</button>`);
-  $('#confirm-exit').addEventListener('click', () => {
-    const activeId = active.id;
-    if (commit(latest => {
-      if (activeSession(latest)?.id !== activeId) throw new Error('Esta jornada ya ha cambiado. Cierra esta ventana y revisa tu actividad.');
-      return endSession(latest);
-    }, 'Salida de prueba registrada. ¡Gracias por tu trabajo!')) closeModal();
-  });
+  commit(latest => {
+    if (activeSession(latest)?.id !== active.id) throw new Error('Este fichaje ya ha cambiado. Revisa la pantalla.');
+    return endSession(latest, now);
+  }, `Check-out registrado a las ${time(now)}.`);
 }
 
 function openRequest(type) {
+  const selectedId = activeSession(state)?.houseId || state.selectedHouse;
+  if (!DEMO_HOUSES.some(item => item.id === selectedId)) {
+    showToast('Elige una vivienda.');
+    $('#house-select')?.focus();
+    return;
+  }
   receipt = null;
   receiptLoading = false;
   receiptReadToken += 1;
   const expense = type === 'expense';
-  const selectedId = activeSession(state)?.houseId || state.selectedHouse;
-  modal(expense ? 'Añadir un gasto' : 'Añadir tiempo extra', expense ? 'Guarda el detalle y adjunta un ticket de prueba.' : 'Para recados fuera del tiempo ya registrado.', `<form id="request-form">
-    <label class="form-field"><span>Vivienda</span><select name="houseId" class="select-input">${DEMO_HOUSES.map(item => `<option value="${item.id}" ${selectedId === item.id ? 'selected' : ''}>${item.name}</option>`).join('')}</select></label>
-    <div class="form-grid"><div class="form-field"><label class="field-label" for="request-amount">${expense ? 'Importe' : 'Minutos adicionales'}</label><div class="input-with-unit"><input class="text-input" name="amount" id="request-amount" type="text" inputmode="${expense ? 'decimal' : 'numeric'}" maxlength="${expense ? 7 : 3}" placeholder="${expense ? '0,00' : '20'}" required><span>${expense ? '€' : 'min'}</span></div>${expense ? '' : '<div class="quick-minutes"><button type="button" data-minutes="10">10</button><button type="button" data-minutes="20">20</button><button type="button" data-minutes="30">30</button></div>'}</div><label class="form-field"><span>Fecha</span><input class="text-input" name="date" type="date" value="${localDate()}" max="${localDate()}" required></label></div>
-    <label class="form-field"><span>${expense ? '¿Qué has comprado?' : '¿A qué has dedicado ese tiempo?'}</span><textarea class="text-input" name="description" maxlength="240" minlength="5" placeholder="${expense ? 'Por ejemplo: detergente y bolsas de basura' : 'Por ejemplo: compra de productos antes de entrar'}" required></textarea></label>
-    ${expense ? `<label class="upload-zone">${icon('camera')}<span><strong>Añadir foto o ticket</strong><small>Opcional · JPG, PNG, WebP o PDF · Máx. 2 MB</small></span><input id="receipt-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" aria-label="Adjuntar foto o ticket de prueba"></label><div id="upload-preview" class="upload-preview" aria-live="polite"></div>` : '<div class="notice">Si has hecho el recado entre la entrada y la salida, ese tiempo ya está incluido.</div><label class="checkbox-field"><input type="checkbox" name="outside" required> Este tiempo queda fuera de la jornada registrada.</label>'}
-    <p id="form-error" class="form-error" role="alert"></p><button class="button full" type="submit">${icon('plus')} Guardar ${expense ? 'gasto' : 'solicitud'} de prueba</button><p class="form-foot">Quedará pendiente de revisión en Gestión.</p></form>`);
-  document.querySelectorAll('[data-minutes]').forEach(button => button.addEventListener('click', () => { $('#request-amount').value = button.dataset.minutes; }));
+  modal(expense ? 'Gasto extra' : 'Tiempo extra', house(selectedId).name, `<form id="request-form">
+    <input type="hidden" name="houseId" value="${esc(selectedId)}">
+    <label class="form-field"><span>${expense ? 'Importe (€)' : 'Minutos extra'}</span><input class="text-input" name="amount" type="text" inputmode="${expense ? 'decimal' : 'numeric'}" maxlength="${expense ? 7 : 3}" placeholder="${expense ? '0,00' : '20'}" required></label>
+    <label class="form-field"><span>Motivo</span><textarea class="text-input" name="description" maxlength="240" minlength="5" placeholder="${expense ? 'Por ejemplo: productos de limpieza' : 'Por ejemplo: compra de productos antes de entrar'}" required></textarea></label>
+    ${expense ? `<label class="upload-zone">${icon('camera')}<span><strong>Foto del ticket</strong><small>JPG, PNG, WebP o PDF · Máx. 2 MB</small></span><input id="receipt-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" aria-label="Foto del ticket" required></label><div id="upload-preview" class="upload-preview" aria-live="polite"></div>` : '<p class="form-hint">Solo minutos que no estén incluidos entre el check-in y el check-out.</p>'}
+    <p id="form-error" class="form-error" role="alert"></p><button class="button full request-save" type="submit">Guardar ${expense ? 'gasto' : 'tiempo extra'}</button>
+    <p class="form-foot">Demo: se guarda solo en este navegador.</p></form>`);
   $('#receipt-file')?.addEventListener('change', readReceipt);
   $('#request-form').addEventListener('submit', event => {
     event.preventDefault();
@@ -215,18 +214,15 @@ function openRequest(type) {
     errorBox.textContent = '';
     try {
       if (receiptLoading) throw new Error('Espera a que termine de cargarse el ticket.');
-      if ($('#receipt-file')?.files.length && !receipt) throw new Error('El ticket no se ha cargado. Elige otro archivo o quítalo.');
+      if (expense && !receipt) throw new Error('Adjunta la foto del ticket.');
       const description = String(data.get('description')).trim();
-      if (description.length < 5) throw new Error('Añade una descripción de al menos cinco caracteres.');
-      const date = validateRequestDate(String(data.get('date')));
-      const item = { id: crypto.randomUUID(), houseId: String(data.get('houseId')), date, description, status: 'pending', createdAt: new Date().toISOString() };
+      if (description.length < 5) throw new Error('Indica un motivo de al menos cinco caracteres.');
+      const now = new Date();
+      const item = { id: crypto.randomUUID(), houseId: selectedId, date: localDate(now), description, status: 'pending', createdAt: now.toISOString() };
       const collection = expense ? 'expenses' : 'extras';
-      if (expense) Object.assign(item, { cents: parseCents(data.get('amount')), receipt });
-      else {
-        if (!data.get('outside')) throw new Error('Confirma que este tiempo no está incluido en los fichajes.');
-        Object.assign(item, { minutes: parseMinutes(data.get('amount')) });
-      }
-      if (commit(latest => ({ ...latest, [collection]: [...latest[collection], item] }), `${expense ? 'Gasto' : 'Tiempo extra'} de prueba guardado. Pendiente de revisión.`)) closeModal();
+      if (expense) Object.assign(item, { cents: parseCents(data.get('amount')), receipt, accounting: false });
+      else Object.assign(item, { minutes: parseMinutes(data.get('amount')) });
+      if (commit(latest => ({ ...latest, [collection]: [...latest[collection], item] }), `${expense ? 'Gasto' : 'Tiempo extra'} guardado en la demo.`)) closeModal();
     } catch (error) { errorBox.textContent = error.message; }
   });
 }
@@ -299,7 +295,7 @@ function exportCSV() {
 }
 
 function resetDemo() {
-  modal('Volver a empezar', 'Restablecer esta demostración', '<div class="prose"><p>Se borrarán los fichajes, solicitudes y tickets de prueba guardados en este navegador. Volverán a aparecer los ejemplos iniciales.</p></div><p id="form-error" class="form-error" role="alert"></p><button id="confirm-reset" class="button danger full">Borrar pruebas y restablecer</button>');
+  modal('Volver a empezar', 'Restablecer esta demostración', '<div class="prose"><p>Se borrarán los fichajes, solicitudes y tickets de prueba guardados en este navegador. La pantalla volverá a estar vacía.</p></div><p id="form-error" class="form-error" role="alert"></p><button id="confirm-reset" class="button danger full">Borrar pruebas y restablecer</button>');
   $('#confirm-reset').addEventListener('click', () => {
     try {
       const next = seedState();
@@ -315,7 +311,7 @@ function resetDemo() {
   });
 }
 
-$('#demo-info').addEventListener('click', () => modal('Una primera vuelta.', 'Esto es una demostración interactiva.', `<div class="prose"><p>Prueba la experiencia de limpieza antes de configurar tus viviendas.</p><ul><li><strong>Jornada:</strong> simula una entrada y una salida.</li><li><strong>Actividad:</strong> consulta las pruebas guardadas.</li><li><strong>Gestión:</strong> prueba cómo revisar gastos y minutos adicionales.</li></ul><p>Todo se guarda <strong>solo en este navegador</strong>. Los datos no se envían a Jaime ni se sincronizan con Inmomanagement.</p><p>Las viviendas son ficticias. El wifi todavía no se verifica y las horas dependen del reloj del dispositivo. <strong>No uses esta demo para fichar de verdad ni subas tickets reales.</strong></p></div><button class="button full" data-close>Entendido, vamos a probar</button>`));
+$('#demo-info').addEventListener('click', () => modal('Vista de prueba', '', `<div class="prose"><p>Elige vivienda, pulsa check-in al llegar y check-out al irte. En Extras puedes guardar un gasto con su ticket o minutos adicionales con su motivo.</p><p>Esta demo guarda todo <strong>solo en este navegador</strong>. Todavía no comprueba el wifi ni envía los datos o los tickets al propietario.</p><p>No subas tickets reales. Los importes y justificantes se usarán para revisión, separados de la contabilidad.</p></div><button class="button full" data-close>Entendido</button>`));
 
 document.addEventListener('click', event => {
   if (event.target.closest('.skip-link')) {
@@ -358,9 +354,5 @@ window.addEventListener('storage', event => {
   } catch { showToast('Los datos han cambiado. Recarga o restablece la demo.'); }
 });
 
-setInterval(() => {
-  const active = activeSession(state);
-  if (active && $('#timer')) $('#timer').innerHTML = timerHTML(active);
-}, 1000);
 
 render();

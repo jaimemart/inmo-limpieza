@@ -10,12 +10,17 @@ Repositorio público de la demo: https://github.com/jaimemart/inmo-limpieza
 
 ## Alcance de esta versión
 
-- Tres viviendas ficticias y ejemplos identificados en pantalla.
-- Entrada y salida con confirmación. Una sola jornada abierta a la vez.
-- Gastos en euros, foto o PDF opcional de hasta 2 MB por archivo.
-- Minutos adicionales entre 1 y 240, con motivo y confirmación de que no están
-  incluidos en la jornada registrada.
-- Historial, filtros, aprobación o rechazo de solicitudes y exportación CSV.
+- Una pantalla para la trabajadora: vivienda, check-in/check-out y dos botones
+  para gastos y tiempo extra. Desplegable con Arzobispo e Hípica.
+- Cada fichaje conserva el instante del primer toque, sin confirmación adicional.
+  Solo puede haber una jornada abierta. La vivienda queda fijada hasta la salida.
+- Gastos con importe, motivo y ticket obligatorio de hasta 2 MB (foto o PDF).
+- Tiempo extra entre 1 y 240 minutos, con motivo. Fecha y vivienda automáticas.
+- Vista del propietario separada en `./#gestion`; registros en `./#actividad`.
+  No hay navegación de gestión en la pantalla de la trabajadora.
+- Revisión del ticket, aprobación o rechazo y CSV de control. Los importes son
+  solicitudes para verificar; nunca se importan a la contabilidad ni a `Gastos`.
+  Se conserva `accounting: false` incluso después de la aprobación.
 - Persistencia local y opción para restablecer la demo.
 
 **No es un sistema de fichaje real.** No comprueba el wifi, no identifica a la
@@ -44,8 +49,8 @@ porque los scripts son módulos ES.
 Desde la raíz del proyecto Inmomanagement, las pruebas de las reglas del modelo
 se ejecutan con `node --test tests/cleaning/model.test.mjs`.
 
-Un enlace puede preseleccionar una vivienda ficticia:
-`./?casa=olivo`, `./?casa=patio` o `./?casa=sol`. Si hay una jornada abierta,
+Un enlace puede preseleccionar una vivienda:
+`./?casa=arzobispo` o `./?casa=hipica`. Si hay una jornada abierta,
 se conserva su vivienda hasta registrar la salida. Estos enlaces sirven para
 probar el comportamiento que tendrá un QR; no acreditan presencia.
 
@@ -53,7 +58,7 @@ probar el comportamiento que tendrá un QR; no acreditan presencia.
 
 Publicar **solo los archivos de esta carpeta** en un repositorio público
 dedicado de GitHub Pages. No copiar el repositorio de Inmomanagement, su
-historial, credenciales, datos de viviendas reales ni documentos.
+historial, credenciales, direcciones completas, configuración de red ni documentos.
 
 Configurar Pages para publicar desde `main` y la raíz `/`. Todos los recursos
 son relativos y funcionan tanto en un dominio raíz como bajo la ruta de un
@@ -75,9 +80,11 @@ un servicio independiente gratuito que valide y almacene las operaciones.
    No aceptar cambios de IP enviados por la trabajadora como configuración.
 4. Persistencia remota de jornadas, solicitudes, decisiones y justificantes.
    Las correcciones deben conservar el registro original y el motivo del cambio.
+   Al adjuntar un ticket, guardar el documento y su referencia junto al motivo,
+   importe, vivienda y autora para que el propietario pueda verlo en su equipo.
 5. Consulta autenticada desde Inmomanagement, sin necesitar que el ordenador
-   esté encendido para fichar. Un gasto solicitado no pasa a la contabilidad
-   automáticamente: requiere revisión y prevención de importaciones duplicadas.
+   esté encendido para fichar. Los tickets y sus importes son control interno;
+   no deben convertirse en apuntes contables, ni siquiera al aprobar su revisión.
 6. Sustituir el adaptador local de esta demo. Actualizar `connect-src 'none'`
    en la política CSP solo con el origen concreto del servicio necesario.
 

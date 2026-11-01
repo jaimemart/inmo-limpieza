@@ -11,8 +11,8 @@
     <title>Inmo · Limpieza</title>
     <link rel="icon" href="./icon.svg" type="image/svg+xml">
     <link rel="manifest" href="./manifest.webmanifest">
-    <link rel="stylesheet" href="./styles.css">
-    <script type="module" src="./app.mjs"></script>
+    <link rel="stylesheet" href="./styles.css?v=2">
+    <script type="module" src="./app.mjs?v=2"></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -33,21 +33,14 @@
     </svg>
 
     <a class="skip-link" href="#main">Ir al contenido</a>
-    <div class="demo-banner"><span class="demo-dot"></span> Vista de prueba <span class="banner-separator">·</span> <span>Sin fichajes reales</span><button id="demo-info" class="banner-info" aria-label="Cómo funciona esta demostración">?</button></div>
+    <div class="demo-banner">Demo · Sin envío real<button id="demo-info" class="banner-info" aria-label="Cómo funciona esta demostración">?</button></div>
     <header class="site-header">
-      <a class="brand" href="#jornada" aria-label="Inmo Limpieza, inicio"><span class="brand-mark"><svg class="icon"><use href="#i-house"/></svg></span><span>inmo<span class="brand-divider">/</span><span class="brand-subtitle">limpieza</span></span></a>
-      <span class="header-caption">Un espacio para cuidar cada casa.</span>
-      <span class="profile" aria-label="Perfil de demostración">L</span>
+      <a class="brand" href="#jornada" aria-label="Limpieza, inicio"><span class="brand-mark"><svg class="icon"><use href="#i-house"/></svg></span><span>Limpieza</span></a>
     </header>
 
     <main id="main" tabindex="-1"></main>
     <noscript><p class="noscript">Activa JavaScript para probar esta miniweb.</p></noscript>
 
-    <nav class="bottom-nav" aria-label="Navegación principal">
-      <a href="#jornada" data-page="jornada"><svg class="icon"><use href="#i-house"/></svg><span>Jornada</span></a>
-      <a href="#actividad" data-page="actividad"><svg class="icon"><use href="#i-history"/></svg><span>Actividad</span></a>
-      <a href="#gestion" data-page="gestion"><svg class="icon"><use href="#i-grid"/></svg><span>Gestión</span></a>
-    </nav>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <dialog id="modal" aria-labelledby="modal-title"><div id="modal-content"></div></dialog>
   </body>
